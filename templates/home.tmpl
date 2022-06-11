@@ -5,7 +5,7 @@
   <div class="row pt-10 mb-5 align-content-center">
     <div class="col-lg-8 align-self-center text-center">
       <h4 class="h3 text-muted">&mdash; Nim's Ecosystem</h4>
-      <h1 class="display-3 fw-bold">Build amazing things</h1>
+      <h1 class="display-3 fw-bold">Efficient, expressive, elegant</h1>
       <p class="fw-normal h2 mb-4">Discover Nim's ecosystem of packages, libraries,<br>frameworks, and tools.</p>
       <div class="row">
         <div class="col-12 spotlight position-relative">
@@ -56,7 +56,7 @@ ${generate_search_box()}
     <div class="col-lg-4 col-md-6">
       <div class="box rounded p-3" stars="${pkg["stargazers_count"].getInt}">
         <h3 class="lh-1 display-1 mb-2"><a href="/pkg/${pkg["name"].str}">${pkg["name"].str}</a></h3>
-        <p class="mb-0 pb-0" style="margin-bottom:0">Compiler package providing the compiler sources as a library</p>
+        <p class="mb-0 pb-0" style="margin-bottom:0">${pkg["description"].str}</p>
         <ul class="package-box-meta-foot mt-1">
           <li class="text-gray">
             <svg width="16" height="16" viewBox="0 0 16 16" style="display:inline-block;vertical-align:text-bottom"><path fill-rule="evenodd" d="M10.5 5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0zm.061 3.073a4 4 0 10-5.123 0 6.004 6.004 0 00-3.431 5.142.75.75 0 001.498.07 4.5 4.5 0 018.99 0 .75.75 0 101.498-.07 6.005 6.005 0 00-3.432-5.142z"></path></svg>
@@ -84,11 +84,11 @@ ${generate_search_box()}
     </div>
   </div>
   <div class="row g-4">
-    # for p in new_packages:
+    # for pkg in new_packages:
     <div class="col-lg-4 col-md-6">
       <div class="box rounded p-3" stars="+12K">
-        <h3 class="lh-1 display-1 mb-2"><a href="/pkg/${p["name"].str}">${p["name"].str}</a></h3>
-        <p class="mb-0 pb-0" style="margin-bottom:0">${p["description"].str}</p>
+        <h3 class="lh-1 display-1 mb-2"><a href="/pkg/${pkg["name"].str}">${pkg["name"].str}</a></h3>
+        <p class="mb-0 pb-0" style="margin-bottom:0">${pkg["description"].str}</p>
         <ul class="package-box-meta-foot mt-1">
           <li class="text-gray">
             <svg width="16" height="16" viewBox="0 0 16 16" style="display:inline-block;vertical-align:text-bottom"><path fill-rule="evenodd" d="M10.5 5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0zm.061 3.073a4 4 0 10-5.123 0 6.004 6.004 0 00-3.431 5.142.75.75 0 001.498.07 4.5 4.5 0 018.99 0 .75.75 0 101.498-.07 6.005 6.005 0 00-3.432-5.142z"></path></svg>
@@ -118,11 +118,11 @@ ${generate_search_box()}
     </div>
   </div>
   <div class="row g-4">
-    # for p in most_queried_packages:
+    # for pkg in most_queried_packages:
     <div class="col-lg-4 col-md-6">
       <div class="box rounded p-3" stars="+12K">
-        <h3 class="lh-1 display-1 mb-2"><a href="/pkg/${p["name"].str}">${p["name"].str}</a></h3>
-        <p class="mb-0 pb-0" style="margin-bottom:0">${p["description"].str}</p>
+        <h3 class="lh-1 display-1 mb-2"><a href="/pkg/${pkg["name"].str}">${pkg["name"].str}</a></h3>
+        <p class="mb-0 pb-0" style="margin-bottom:0">${pkg["description"].str}</p>
         <ul class="package-box-meta-foot mt-1">
           <li class="text-gray">
             <svg width="16" height="16" viewBox="0 0 16 16" style="display:inline-block;vertical-align:text-bottom"><path fill-rule="evenodd" d="M10.5 5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0zm.061 3.073a4 4 0 10-5.123 0 6.004 6.004 0 00-3.431 5.142.75.75 0 001.498.07 4.5 4.5 0 018.99 0 .75.75 0 101.498-.07 6.005 6.005 0 00-3.432-5.142z"></path></svg>

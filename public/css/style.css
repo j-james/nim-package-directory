@@ -5,7 +5,7 @@
 body {
   background-color: #f7f5ee;
   color: var(--dark-color);
-  font-size: 1.4em;
+  font-size: 1.3em;
 }
 
 .list-unstyled {
@@ -60,6 +60,10 @@ body {
   font-weight: bold;
   height: 36px;
   line-height: 33px;
+}
+
+.navbar {
+  background-color: #f7f5ee;
 }
 
 .tags-area {
@@ -253,7 +257,6 @@ body.dark-theme .navbar {
 
 body.dark-theme .navbar-nav a {
   color: lightblue;
-  font-size: 1.3rem;
 }
 
 body.dark-theme #hero-landing-page {
