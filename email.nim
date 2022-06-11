@@ -1,7 +1,4 @@
-
-import smtp
-import asyncdispatch
-import strutils
+import std/[asyncdispatch, smtp, strutils]
 
 type
   Config* = object
@@ -24,4 +21,4 @@ proc sendEMail(config: Config, subject, message, recipient: string, from_addr = 
   await client.sendMail(from_addr, toList,
       $encoded)
 
-#let c = Config(smtpAddress: "localhost", smtpPort: 2525, smtpUser: "", smtpPassword: "")
+# let c = Config(smtpAddress: "localhost", smtpPort: 2525, smtpUser: "", smtpPassword: "")

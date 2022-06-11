@@ -1,10 +1,9 @@
 
-import times
-import strutils
+import std/[times, strutils]
 
+## Convert TimeInterval to human-friendly description
+## e.g. "5 minutes ago"
 proc toFriendlyInterval*(i: TimeInterval, approx = 10): string =
-  ## Convert TimeInterval to human-friendly description
-  ## e.g. "5 minutes ago"
   result = ""
   var approx = approx
   let vals = [i.years, i.months, i.days, i.hours, i.minutes, i.seconds]
@@ -36,9 +35,7 @@ proc toFriendlyInterval*(i: TimeInterval, approx = 10): string =
   else:
     result.add " ago"
 
-
 proc toNonLinearInterval(a, b: Time): TimeInterval =
-  ## 
   const
     minutes_s = 60
     hours_s = minutes_s * 60
@@ -76,7 +73,6 @@ proc toNonLinearInterval2(a, b: Time): TimeInterval =
     months.int, years.int)
 
 proc toNonLinearInterval3(a, b: Time): (TimeInterval, bool) =
-  ##
   var i = b.toTimeInterval - a.toTimeInterval
 
   let in_future = ((b - a).seconds.int < 0)
@@ -106,9 +102,9 @@ proc toNonLinearInterval3(a, b: Time): (TimeInterval, bool) =
 
   return (i, in_future)
 
+## Convert TimeInterval to human-friendly description
+## e.g. "5 minutes ago"
 proc toFriendlyInterval3*(i: TimeInterval, in_future: bool, approx = 10): string =
-  ## Convert TimeInterval to human-friendly description
-  ## e.g. "5 minutes ago"
   result = ""
   var approx = approx
   let vals = [i.years, i.months, i.days, i.hours, i.minutes, i.seconds]
@@ -132,18 +128,15 @@ proc toFriendlyInterval3*(i: TimeInterval, in_future: bool, approx = 10): string
   else:
     result.add " ago"
 
-
-
 proc toFriendlyInterval*(a, b: Time, approx = 10): string =
   # creates inc
-  #let i = b.toTimeInterval - a.toTimeInterval
+  # let i = b.toTimeInterval - a.toTimeInterval
 
-  #let i2 = initInterval(seconds=int(b - a))
+  # let i2 = initInterval(seconds=int(b - a))
   let (i, in_future) = toNonLinearInterval3(a, b)
   for v in [i.years, i.months, i.days, i.hours, i.minutes, i.seconds]:
     assert v >= 0
   toFriendlyInterval3(i, in_future, approx)
 
-#proc toFriendlyInterval(a, b: TimeInfo, approx = 10): string =
+# proc toFriendlyInterval(a, b: TimeInfo, approx = 10): string =
 #  (a - b).fromSeconds.toTimeInterval.toFriendlyInterval(approx)
-

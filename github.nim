@@ -3,10 +3,7 @@
 # GitHub interface
 #
 
-import httpclient,
-  json,
-  strutils,
-  times
+import std/[httpclient, json, strutils, times]
 
 const
   github_readme_tpl = "https://api.github.com/repos/$#/readme"
@@ -20,13 +17,12 @@ const
   pkgs_commit_url = "https://api.github.com/repos/nim-lang/packages/git/refs/heads/master"
 
 
-
 let gh_readme_client = newHttpClient()
 gh_readme_client.headers["Accept"] = "application/vnd.github.v3.html" #FIXME Add token
 
 
+## Update pkg version and readme from GitHub
 proc update_readme_and_version_from_gh*(pkg: JsonNode, conf: JsonNode) =
-  ## Update pkg version and readme from GitHub
   let url = pkg["url"].str
   pkg["github_last_update_time"] = newJInt epochTime().int
   let owner = url.split('/')[3]
@@ -54,7 +50,7 @@ proc update_readme_and_version_from_gh*(pkg: JsonNode, conf: JsonNode) =
     pkg["github_latest_version_url"] = newJString ""
     pkg["github_latest_version_time"] = newJString ""
 
-#
+
 #def fetch_last_commit(url):
 #    """Fetch from GitHub API
 #    """
@@ -64,4 +60,3 @@ proc update_readme_and_version_from_gh*(pkg: JsonNode, conf: JsonNode) =
 #    except:
 #        print("Unable to parse output from %s" % url)
 #        print(repr(r))
-#

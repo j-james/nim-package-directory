@@ -5,36 +5,37 @@
 # Released under GPLv3 License, see LICENSE file
 #
 
-import asyncdispatch,
- deques,
- httpclient,
- httpcore,
- json,
- os,
- osproc,
- sequtils,
- sets,
- streams,
- strutils,
- tables,
- times,
- uri
+import std/[
+  asyncdispatch,
+  deques,
+  httpclient,
+  httpcore,
+  json,
+  os,
+  osproc,
+  sequtils,
+  sets,
+  streams,
+  strutils,
+  tables,
+  times,
+  uri
+]
 
 from std/strformat import `&`
-from xmltree import escape
-from algorithm import sort, sorted, sortedByIt, reversed
-from marshal import store, load
-from posix import onSignal, SIGINT, SIGTERM, getpid
-from times import epochTime
+from std/xmltree import escape
+from std/algorithm import sort, sorted, sortedByIt, reversed
+from std/marshal import store, load
+from std/posix import onSignal, SIGINT, SIGTERM, getpid
+from std/times import epochTime
 
-#from nimblepkg import getTagsListRemote, getVersionList
+# from nimblepkg import getTagsListRemote, getVersionList
 import jester,
   morelogging,
   sdnotify,
   statsd_client
 
-import signatures,
-  persist
+import signatures, persist
 
 
 const
@@ -61,7 +62,6 @@ const
     "Pragma": "no-cache",
     "Content-Type": "image/svg+xml"
   }
-
 
 
 # init
@@ -145,9 +145,9 @@ var pkgs_building = initHashSet[string]()
 # tag -> package name
 # initialized/updated by load_packages
 var packages_by_tag = newTable[string, seq[string]]()
- # word -> package name
- # word -> package name
- # initialized/updated by load_packages
+# word -> package name
+# word -> package name
+# initialized/updated by load_packages
 var packages_by_description_word = newTable[string, seq[string]]()
 
 # symbol -> seq[PkgSymbol]
@@ -193,8 +193,8 @@ proc save(cache: Cache) =
   f.store(cache)
   f.close()
 
+## Load cache from disk or create empty cache
 proc load_cache(): Cache =
-  ## Load cache from disk or create empty cache
   log_debug "loading cache at $#" % cache_fn
   try:
     # FIXME
@@ -219,8 +219,8 @@ proc uniescape(inp: string): string =
     else:
       result.add c
 
+## Save package metadata
 proc save_pkg_metadata(j: PkgDocMetadata, fn: string) =
-  ## Save package metadata
   log_debug "Saving to $#" % fn
   var k = PkgDocMetadata()
   deepCopy[PkgDocMetadata](k, j)
@@ -232,14 +232,14 @@ proc save_pkg_metadata(j: PkgDocMetadata, fn: string) =
   f.store(k)
   f.close()
 
+## load package metadata
 proc load_metadata(fn: string): PkgDocMetadata =
-  ## load package metadata
   log_debug "Loading $#" % fn
   load(newFileStream(fn, fmRead), result)
 
+## scan all packages dirs, populate jsondoc_symbols,
+## jsondoc_symbols_by_pkg and pkgs_doc_files
 proc scan_pkgs_dir(pkgs_root: string) =
-  ## scan all packages dirs, populate jsondoc_symbols,
-  ## jsondoc_symbols_by_pkg and pkgs_doc_files
   let pattern = pkgs_root / "*" / "nimpkgdir.json"
   # e.g /var/lib/nim_package_directory/cache/*/nimpkgdir.json
   log_info "scanning pattern '" & pattern & "'"
@@ -281,22 +281,24 @@ const
   doc_running_badge = slurp "templates/doc_running.svg"
   version_badge_tpl = slurp template_path / "version-template-blue.svg"
 
-# proc setup_seccomp() =
-#   ## Setup seccomp sandbox
-#   const syscalls = """accept,access,arch_prctl,bind,brk,close,connect,epoll_create,epoll_ctl,epoll_wait,execve,fcntl,fstat,futex,getcwd,getrlimit,getuid,ioctl,listen,lseek,mmap,mprotect,munmap,open,poll,read,readlink,recvfrom,rt_sigaction,rt_sigprocmask,sendto,set_robust_list,setsockopt,set_tid_address,socket,stat,uname,write"""
-#   let ctx = seccomp_ctx()
-#   for sc in syscalls.split(','):
-#     ctx.add_rule(Allow, sc)
-#   ctx.load()
+#[
+## Setup seccomp sandbox
+proc setup_seccomp() =
+  const syscalls = """accept,access,arch_prctl,bind,brk,close,connect,epoll_create,epoll_ctl,epoll_wait,execve,fcntl,fstat,futex,getcwd,getrlimit,getuid,ioctl,listen,lseek,mmap,mprotect,munmap,open,poll,read,readlink,recvfrom,rt_sigaction,rt_sigprocmask,sendto,set_robust_list,setsockopt,set_tid_address,socket,stat,uname,write"""
+  let ctx = seccomp_ctx()
+  for sc in syscalls.split(','):
+    ctx.add_rule(Allow, sc)
+  ctx.load()
+]#
 
+## Fetch packages.json from GitHub
 proc fetch_github_packages_json(): Future[string] {.async.} =
-  ## Fetch packages.json from GitHub
   log_debug "fetching ", github_packages_json_raw_url
   return await newAsyncHttpClient().getContent(github_packages_json_raw_url)
 
+## Load packages.json
+## Rebuild packages_by_tag, packages_by_description_word
 proc load_packages*() =
-  ## Load packages.json
-  ## Rebuild packages_by_tag, packages_by_description_word
   log_debug "loading $#" % conf.packages_list_fname
   pkgs.clear()
   if not conf.packages_list_fname.file_exists:
@@ -336,22 +338,22 @@ proc load_packages*() =
 
   log_info "Loaded ", $pkgs.len, " packages"
 
-  #log_debug "writing $#" % conf.packages_list_fname
-  #conf.packages_list_fname.writeFile(conf.packages_list_fname.readFile)
+  # log_debug "writing $#" % conf.packages_list_fname
+  # conf.packages_list_fname.writeFile(conf.packages_list_fname.readFile)
 
 
 proc cleanupWhitespace(s: string): string
 
+## Save packages.json
 proc save_packages() =
-  ## Save packages.json
   var new_pkgs = newJArray()
   for pname in toSeq(pkgs.keys()).sorted(system.cmp):
     new_pkgs.add pkgs[pname]
 
   conf.packages_list_fname.writeFile(new_pkgs.pretty.cleanupWhitespace)
 
+## Search packages by name, tag and keyword
 proc search_packages*(query: string): CountTable[string] =
-  ## Search packages by name, tag and keyword
   let query = query.strip.toLowerAscii.split({' ', ','})
   var found_pkg_names = initCountTable[string]()
   for item in query:
@@ -377,15 +379,15 @@ proc search_packages*(query: string): CountTable[string] =
   found_pkg_names.sort()
   return found_pkg_names
 
+## async get JSON from GH
 proc getGHJson(url: string): Future[JsonNode] {.async.} =
-  ## async get JSON from GH
   let ac = newAsyncHttpClient()
   ac.headers = github_token_headers
   let r = await ac.getContent(url)
   return parseJson(r)
 
+## Fetch README.* from GitHub
 proc fetch_github_readme*(pkg: Pkg, owner_repo_name: string) {.async.} =
-  ## Fetch README.* from GitHub
   log_debug "fetching GH readme ", github_readme_tpl % owner_repo_name
   try:
     let ac = newAsyncHttpClient()
@@ -398,8 +400,8 @@ proc fetch_github_readme*(pkg: Pkg, owner_repo_name: string) {.async.} =
     log_debug getCurrentExceptionMsg()
     pkg["github_readme"] = newJString ""
 
+## Fetch documentation pages from GitHub
 proc fetch_github_doc_pages(pkg: Pkg, owner, repo_name: string) {.async.} =
-  ## Fetch documentation pages from GitHub
   let url = github_doc_index_tpl % [owner.toLowerAscii, repo_name]
   log_debug "Checking ", url
   let resp = await newAsyncHttpClient().get(url)
@@ -408,15 +410,15 @@ proc fetch_github_doc_pages(pkg: Pkg, owner, repo_name: string) {.async.} =
   else:
     log_debug "Doc not found at ", url
 
+## Add BuildHistoryItem to build history
 proc append(build_history: var Deque[BuildHistoryItem], name: string,
     build_time: Time, build_status, doc_build_status: BuildStatus) =
-  ## Add BuildHistoryItem to build history
   if build_history.len == build_history_size:
     discard build_history.popLast
   let i: BuildHistoryItem = (name, build_time, build_status, doc_build_status)
   build_history.addFirst(i)
 
-#proc `+`(t1, t2: Time): Time {.borrow.}
+# proc `+`(t1, t2: Time): Time {.borrow.}
 
 type RunOutput = tuple[exit_code: int, elapsed: float, output: string]
 
@@ -434,37 +436,38 @@ proc strip_html*(html: string): string =
     elif c == '>':
       inside_tag = false
 
+#[
+proc run_process(bin_path, desc, work_dir: string,
+    timeout: int, log_output: bool,
+    args: varargs[string, `$`]): (bool, string) {.discardable.} =
+  ## Run command with timeout
+  # TODO: async
 
-# proc run_process(bin_path, desc, work_dir: string,
-#     timeout: int, log_output: bool,
-#     args: varargs[string, `$`]): (bool, string) {.discardable.} =
-#   ## Run command with timeout
-#   # TODO: async
-#
-#   log_debug "running: <" & bin_path & " " & join(args, " ") & "> in " & work_dir
-#
-#   var p = startProcess(
-#     bin_path, args=args,
-#     workingDir=work_dir,
-#     options={poStdErrToStdOut}
-#   )
-#   let exit_val = p.waitForExit(timeout=timeout * 1000)
-#   let stdout_str = p.outputStream().readAll()
-#
-#   if log_output or (exit_val != 0):
-#     if stdout_str.len > 0:
-#       log_debug "Stdout: ---\n$#---" % stdout_str
-#
-#   if exit_val == 0:
-#     log_debug "$# successful" % desc
-#   else:
-#     log.error "run_process: $# failed, exit value: $#" % [desc, $exit_val]
-#   return ((exit_val == 0), stdout_str)
+  log_debug "running: <" & bin_path & " " & join(args, " ") & "> in " & work_dir
 
+  var p = startProcess(
+    bin_path, args=args,
+    workingDir=work_dir,
+    options={poStdErrToStdOut}
+  )
+  let exit_val = p.waitForExit(timeout=timeout * 1000)
+  let stdout_str = p.outputStream().readAll()
+
+  if log_output or (exit_val != 0):
+    if stdout_str.len > 0:
+      log_debug "Stdout: ---\n$#---" % stdout_str
+
+  if exit_val == 0:
+    log_debug "$# successful" % desc
+  else:
+    log.error "run_process: $# failed, exit value: $#" % [desc, $exit_val]
+  return ((exit_val == 0), stdout_str)
+]#
+
+## Run command asyncronously with timeout
 proc run_process2(bin_path, desc, work_dir: string,
     timeout: int, log_output: bool,
     args: seq[string]): Future[RunOutput] {.async.} =
-  ## Run command asyncronously with timeout
   let
     t0 = epochTime()
     p = startProcess(
@@ -517,9 +520,9 @@ proc run_process2(bin_path, desc, work_dir: string,
   return (exit_code, elapsed, output)
 
 
+## Based on Nimble implementation, compares versions a.b.c by simply
+## comparing the integers :-/
 proc is_newer(b, a: string): int =
-  ## Based on Nimble implementation, compares versions a.b.c by simply
-  ## comparing the integers :-/
   for (ai, bi) in zip(a.split('.'), b.split('.')):
     let aa = parseInt(ai)
     let bb = parseInt(bi)
@@ -530,8 +533,8 @@ proc is_newer(b, a: string): int =
 
   return -1
 
+## Extracts the release metadata chunk from `releases` matching the latest release
 proc extract_latest_version(releases: JsonNode): (string, JsonNode) =
-  ## Extracts the release metadata chunk from `releases` matching the latest release
   var latest_version = "-1.-1.-1"
   for r in releases:
     let version = r["tag_name"].str.strip().strip(trailing = false, chars = {'v'})
@@ -541,8 +544,8 @@ proc extract_latest_version(releases: JsonNode): (string, JsonNode) =
 
   log_debug "Picking latest version from GH tags: ", latest_version
 
+## Extracts latest releases as JSON array
 proc extract_latest_versions_str(releases: JsonNode): JsonNode =
-  ## Extracts latest releases as JSON array
   result = newJArray()
   var latest_version = "-1.-1.-1"
   var vers: seq[string] = @[]
@@ -553,9 +556,9 @@ proc extract_latest_versions_str(releases: JsonNode): JsonNode =
   for v in vers.sorted(is_newer)[^x..^1]:
     result.add newJString(v)
 
+## Fetch versions from GH from releases and tags
+## Set github_versions, github_latest_version, github_latest_version_url
 proc fetch_github_versions(pkg: Pkg, owner_repo_name: string) {.async.} =
-  ## Fetch versions from GH from releases and tags
-  ## Set github_versions, github_latest_version, github_latest_version_url
   log_debug "fetching GH tags ", github_tags_tpl % owner_repo_name
   var version_names = newJArray()
   try:
@@ -611,32 +614,23 @@ proc fetch_github_versions(pkg: Pkg, owner_repo_name: string) {.async.} =
 
     pkg["github_latest_version_time"] = newJString ""
 
-proc fetch_github_repository_stats(sorting = "updated", pagenum = 1,
-    limit = 200, initial_date: DateTime):
-    Future[seq[JsonNode]] {.async.} =
-  ## Fetch projects on GitHub
-  let date = initial_date.format("yyyy-MM-dd")
-  let q = github_repository_search_tpl % [date, $limit, sorting, $pagenum]
-  log_info "Searching GH repos: '$#'" % q
-  let query_res = await getGHJson(q)
-  if sorting == "updated":
-    return query_res["items"].elems.sortedByIt(it["updated_at"].str).reversed()
-  return query_res["items"].elems
 
-proc github_trending_packages(request: Request, pkgs: Pkgs): Future[seq[
-    JsonNode]] {.async.} =
-  ## Trending GitHub packages
-  # TODO: Dom: merge this into the procedure above ^
+proc fetch_trending_packages(request: Request, pkgs: Pkgs): Future[seq[JsonNode]] {.async.} =
 
   if volatile_cache_github_trending_last_update_time +
       github_caching_time > epochTime().int:
     return volatile_cache_github_trending
 
+  let date = utc(getTime() - 14.days).format("yyyy-MM-dd")
+  let q = github_repository_search_tpl % [date, "20", "updated", "1"]
+  log_info "Searching GH repos: '$#'" % q
+  let query_res = await getGHJson(q)
+  # NOTE: getGHJson should have descriptions in it???
+  let pkgs_list: seq[JsonNode] =
+    query_res["items"].elems
+    .sortedByIt(it["updated_at"].str).reversed()
+
   result = @[]
-  let pkgs_list = await fetch_github_repository_stats(
-    sorting = "updated", pagenum = 1, limit = 20,
-    initial_date = utc(getTime() - 14.days)
-  )
   var website_to_name = initTable[string, string]()
   for it in pkgs.values:
     if it.hasKey("web"):
@@ -645,14 +639,16 @@ proc github_trending_packages(request: Request, pkgs: Pkgs): Future[seq[
   for p in pkgs_list:
     p["update_age"] = newJString ""
     # TODO: remove last update
-    #try:
-    #  # 2017-07-21T12:48:35Z
-    #  let pa = p["pushed_at"].getStr()
-    #  let t = parse(pa, "yyyy-MM-dd\'T\'HH:mm:ss", utc())
-    #  let d = toFriendlyInterval(t, now().utc, approx = 2)
-    #  p["update_age"] = newJString d
-    #except:
-    #  p["update_age"] = newJString ""
+    #[
+    try:
+      # 2017-07-21T12:48:35Z
+      let pa = p["pushed_at"].getStr()
+      let t = parse(pa, "yyyy-MM-dd\'T\'HH:mm:ss", utc())
+      let d = toFriendlyInterval(t, now().utc, approx = 2)
+      p["update_age"] = newJString d
+    except:
+      p["update_age"] = newJString ""
+    ]#
 
     let url = p["html_url"].str
     if website_to_name.hasKey url:
@@ -663,34 +659,32 @@ proc github_trending_packages(request: Request, pkgs: Pkgs): Future[seq[
   volatile_cache_github_trending = result
   volatile_cache_github_trending_last_update_time = epochTime().int
 
+#[
+proc fetch_using_git(pname, url: string): bool =
+  let repo_dir =  conf.tmp_nimble_root_dir / pname
+  if not repo_dir.dir_exists():
+    log_debug "checking out $#" % url
+    run_process_old(git_bin_path, "git clone", conf.tmp_nimble_root_dir, 60, false,
+    "clone", url, pname)
+  else:
+    log_debug "git pull-ing $#" % url
+    run_process_old(git_bin_path, "git pull", repo_dir, 60, false,
+    "pull")
 
+  let commitish = run_process_old(git_bin_path, "git rev-parse", repo_dir,
+  1, false,
+  "rev-parse", "--verify", "HEAD")
 
+  if commitish == pkgs_doc_files[pname].last_commitish:
+    pkgs_doc_files[pname].expire_time = getTime() + build_expiry_time
+    log_debug "no changes to repo"
+    return false
 
-# proc fetch_using_git(pname, url: string): bool =
-#   let repo_dir =  conf.tmp_nimble_root_dir / pname
-#   if not repo_dir.dir_exists():
-#     log_debug "checking out $#" % url
-#     run_process_old(git_bin_path, "git clone", conf.tmp_nimble_root_dir, 60, false,
-#     "clone", url, pname)
-#   else:
-#     log_debug "git pull-ing $#" % url
-#     run_process_old(git_bin_path, "git pull", repo_dir, 60, false,
-#     "pull")
-#
-#   let commitish = run_process_old(git_bin_path, "git rev-parse", repo_dir,
-#   1, false,
-#   "rev-parse", "--verify", "HEAD")
-#
-#   if commitish == pkgs_doc_files[pname].last_commitish:
-#     pkgs_doc_files[pname].expire_time = getTime() + build_expiry_time
-#     log_debug "no changes to repo"
-#     return false
-#
-#   return true
+  return true
+]#
 
-
+## Run nimble install for a package using a dedicated directory
 proc fetch_and_build_pkg_using_nimble_old(pname: string) {.async.} =
-  ## Run nimble install for a package using a dedicated directory
   let tmp_dir = conf.tmp_nimble_root_dir / pname
   log_debug "Starting nimble install $# --verbose --nimbleDir=$# -y" % [pname, tmp_dir]
   let po = await run_process2(
@@ -723,42 +717,44 @@ proc fetch_and_build_pkg_using_nimble_old(pname: string) {.async.} =
   pkgs_doc_files[pname].build_time = getTime()
   pkgs_doc_files[pname].expire_time = getTime() + build_expiry_time
 
-# proc fetch_pkg_using_nimble(pname: string): bool =
-#   let pkg_install_dir = conf.tmp_nimble_root_dir / pname
-#
-#   var outp = run_process_old(nimble_bin_path, "nimble update",
-#     conf.tmp_nimble_root_dir, 10, true,
-#     "update", " --nimbleDir=" & conf.tmp_nimble_root_dir)
-#   assert outp.contains("Done")
-#
-#   #if not conf.tmp_nimble_root_dir.dir_exists():
-#   outp = ""
-#   if true:
-#     # First install
-#     log_debug conf.tmp_nimble_root_dir, " is not existing"
-#     outp = run_process_old(nimble_bin_path, "nimble install", conf.tmp_nimble_root_dir,
-#       60, true,
-#       "install", pname, " --nimbleDir=./nyan", "-y")
-#     log_debug "Install successful"
-#
-#   else:
-#     # Update pkg
-#     #outp = run_process_old(nimble_bin_path, "nimble install", "/", 60, true,
-#     #  "install", pname, " --nimbleDir=" & conf.tmp_nimble_root_dir, "-y")
-#     #  FIXME
-#     log_debug "Update successful"
-#
-#   pkgs_doc_files[pname].build_output = outp
-#   return true
+#[
+proc fetch_pkg_using_nimble(pname: string): bool =
+  let pkg_install_dir = conf.tmp_nimble_root_dir / pname
 
+  var outp = run_process_old(nimble_bin_path, "nimble update",
+    conf.tmp_nimble_root_dir, 10, true,
+    "update", " --nimbleDir=" & conf.tmp_nimble_root_dir)
+  assert outp.contains("Done")
+
+  #if not conf.tmp_nimble_root_dir.dir_exists():
+  outp = ""
+  if true:
+    # First install
+    log_debug conf.tmp_nimble_root_dir, " is not existing"
+    outp = run_process_old(nimble_bin_path, "nimble install", conf.tmp_nimble_root_dir,
+      60, true,
+      "install", pname, " --nimbleDir=./nyan", "-y")
+    log_debug "Install successful"
+
+  else:
+    # Update pkg
+    #outp = run_process_old(nimble_bin_path, "nimble install", "/", 60, true,
+    #  "install", pname, " --nimbleDir=" & conf.tmp_nimble_root_dir, "-y")
+    #  FIXME
+    log_debug "Update successful"
+
+  pkgs_doc_files[pname].build_output = outp
+  return true
+]#
+
+## Generate pkg parent dir
 proc package_parent_dir(pname: string): string =
-  ## Generate pkg parent dir
   # Full path example:
   # /var/lib/nim_package_dir/nimgame2
   conf.tmp_nimble_root_dir / pname
 
+## Locate installed pkg root dir
 proc locate_pkg_root_dir(pname: string): string =
-  ## Locate installed pkg root dir
   # Full path example:
   # /dev/shm/nim_package_dir/nimgame2/pkgs/nimgame2-0.1.0
   let pkgs_dir = conf.tmp_nimble_root_dir / pname / "pkgs"
@@ -775,8 +771,8 @@ proc locate_pkg_root_dir(pname: string): string =
 
   raise newException(Exception, "Root dir for $# not found" % pname)
 
+## Build docs
 proc build_docs(pname: string) {.async.} =
-  ## Build docs
   let pkg_root_dir = locate_pkg_root_dir(pname)
   log_debug "Walking ", pkg_root_dir
   #for fname in pkg_root_dir.walkDirRec(filter={pcFile}): # Bug in walkDirRec
@@ -834,9 +830,9 @@ proc build_docs(pname: string) {.async.} =
     else: BuildStatus.Failed
 
 
+## Parse jsondoc items, add them to the global `jsondoc_symbols`
+## and `jsondoc_symbols_by_pkg`
 proc parse_jsondoc(fname: string, pkg_root_dir: string, pname: string) =
-  ## Parse jsondoc items, add them to the global `jsondoc_symbols`
-  ## and `jsondoc_symbols_by_pkg`
   # replace ".nim" with ".json"
   let (jsonf_dir, jsonf_basename, _) = splitFile(fname)
   var json_fn = jsonf_dir / jsonf_basename  & ".json"
@@ -886,9 +882,9 @@ proc parse_jsondoc(fname: string, pkg_root_dir: string, pname: string) =
     log_debug "failed to parse " & json_fn & " : " &
         getCurrentExceptionMsg()
 
+## Generate jsondoc items, add them to the global `jsondoc_symbols`
+## and `jsondoc_symbols_by_pkg`
 proc generate_jsondoc(pname: string) {.async.} =
-  ## Generate jsondoc items, add them to the global `jsondoc_symbols`
-  ## and `jsondoc_symbols_by_pkg`
   let pkg_root_dir = locate_pkg_root_dir(pname)
   log_debug "Walking ", pkg_root_dir
 
@@ -1064,8 +1060,8 @@ proc wait_build_completion(pname: string) {.async.} =
     log_debug "waiting already running build for $# $#s..." % [pname, $int(elapsed)]
     await sleepAsync 1000
 
+## Translate terminal colors into HTML with CSS classes
 proc translate_term_colors*(outp: string): string =
-  ## Translate terminal colors into HTML with CSS classes
   const sequences = @[
     ("[36m[2m", "<span>"),
     ("[32m[1m", """<span class="term-success">"""),
@@ -1085,14 +1081,14 @@ proc translate_term_colors*(outp: string): string =
   for s in sequences:
     result = result.replace(s[0], s[1])
 
+## Return sorted CountTable
 proc sorted*[T](t: CountTable[T]): CountTable[T] =
-  ## Return sorted CountTable
   var tcopy = t
   tcopy.sort()
   tcopy
 
+## Return CountTable most common keys
 proc top_keys*[T](t: CountTable[T], n: int): seq[T] =
-  ## Return CountTable most common keys
   result = @[]
   var tcopy = t
   tcopy.sort()
@@ -1118,13 +1114,15 @@ router mainRouter:
   get "/":
     log_req request
     stats.incr("views")
+
+    # Grab the most queried packages
     var top_pkgs: seq[Pkg] = @[]
     for pname in top_keys(most_queried_packages, 5):
       if pkgs.hasKey(pname):
         top_pkgs.add pkgs[pname]
 
+    # Grab the newest packages
     log_debug "pkgs history len: $#" % $cache.pkgs_history.len
-    # List 5 newest packages
     var new_pkgs: seq[Pkg] = @[]
     for n in 1..min(cache.pkgs_history.len, 5):
       let pname = cache.pkgs_history[^n].name.normalize()
@@ -1142,6 +1140,7 @@ router mainRouter:
   get "/search":
     log_req request
     stats.incr("views")
+
     let found_pkg_names = search_packages(@"query")
 
     var pkgs_list: seq[Pkg] = @[]
@@ -1149,17 +1148,15 @@ router mainRouter:
       pkgs_list.add pkgs[pn]
 
     stats.gauge("search_found_pkgs", pkgs_list.len)
-    let body = generate_search_box(@"query") &
-               generate_pkg_list_page(pkgs_list)
+    let body = generate_search_box(@"query") & generate_pkg_list_page(pkgs_list)
     resp base_page(request, body)
 
+  ## build history and status
   get "/build_history.html":
-    ## build history and status
     include "templates/build_history.tmpl"
     log_req request
 
-    resp base_page(request, generate_build_history_page(build_history,
-        pkgs_waiting_build, pkgs_building))
+    resp base_page(request, generate_build_history_page(build_history, pkgs_waiting_build, pkgs_building))
 
   get "/pkg/@pkg_name/?":
     log_req request
@@ -1190,8 +1187,8 @@ router mainRouter:
 
     resp base_page(request, generate_pkg_page(pkg))
 
+  ## Create or update a package description
   post "/update_package":
-    ## Create or update a package description
     log_req request
     stats.incr("views")
     const required_fields = @["name", "url", "method", "tags", "description",
@@ -1252,21 +1249,21 @@ router mainRouter:
       else: "Added new package $#" % name
     resp base_page(request, "OK")
 
+  ## Serve the packages list file
   get "/packages.json":
-    ## Serve the packages list file
     log_req request
     stats.incr("views")
     resp conf.packages_list_fname.readFile
 
+  ## Serve the package count
   get "/api/v1/package_count":
-    ## Serve the package count
     log_req request
     stats.incr("views")
     resp $pkgs.len
 
   include "templates/doc_files_list.tmpl"
+  ## Serve hosted docs for a package: summary page
   get "/docs/@pkg_name/?":
-    ## Serve hosted docs for a package: summary page
     log_req request
     stats.incr("views")
     let pname = normalize(@"pkg_name")
@@ -1284,8 +1281,8 @@ router mainRouter:
       generate_doc_files_list_page(pname, pkgs_doc_files[pname])
     )
 
+  ## Serve hosted docs for a package: IDX summary
   get "/docs/@pkg_name/idx_summary.json":
-    ## Serve hosted docs for a package: IDX summary
     log_req request
     stats.incr("views")
     let pname = normalize(@"pkg_name")
@@ -1307,17 +1304,17 @@ router mainRouter:
     for kind, path in walkDir(pkg_root_dir, relative = true):
       if path.endswith(".idx"):
         idx_filenames.add path
-        #let chunks = path.split('-', maxsplit=1)
-        #if chunks[0].normalize() == pname:
-        #  result = pkgs_dir / path
+        # let chunks = path.split('-', maxsplit=1)
+        # if chunks[0].normalize() == pname:
+        #   result = pkgs_dir / path
 
       # Show files summary
     let s = %* {"version": 1, "idx_filenames": idx_filenames}
     resp $s
 
   #get "/docs/@pkg_name_and_doc_path":
+  ## Serve hosted docs and idx files for a package
   get "/docs/@pkg_name/@a?/?@b?/?@c?/?@d?":
-    ## Serve hosted docs and idx files for a package
     log_req request
     stats.incr("views")
     let pname = normalize(@"pkg_name")
@@ -1380,8 +1377,8 @@ router mainRouter:
       generate_loader_page()
     )
 
+  ## New and updated packages feed
   get "/packages.xml":
-    ## New and updated packages feed
     log_req request
     stats.incr("views_rss")
     let baseurl = conf.public_baseurl.parseUri
@@ -1427,12 +1424,12 @@ router mainRouter:
 
   # CI Routing
 
+  ## CI summary
   get "/ci":
-    ## CI summary
     log_req request
     stats.incr("views")
-    #@bottle.view('index')
-    #refresh_build_num()
+    # @bottle.view('index')
+    # refresh_build_num()
     discard
 
   get "/ci/install_report":
@@ -1440,8 +1437,8 @@ router mainRouter:
     stats.incr("views")
     discard
 
+  ## Version badge. Set HTTP headers to control caching.
   get "/ci/badges/@pkg_name/version.svg":
-    ## Version badge. Set HTTP headers to control caching.
     log_req request
     stats.incr("views")
     let pname = normalize(@"pkg_name")
@@ -1464,9 +1461,9 @@ router mainRouter:
       let badge = version_badge_tpl % ["none", "none"]
       resp(Http200, xml_no_cache_headers, badge)
 
+  ## Status badge
+  ## Set HTTP headers to control caching.
   get "/ci/badges/@pkg_name/nimdevel/status.svg":
-    ## Status badge
-    ## Set HTTP headers to control caching.
     log_req request
     stats.incr("views")
     let pname = normalize(@"pkg_name")
@@ -1500,9 +1497,9 @@ router mainRouter:
         build_waiting_badge
     resp(Http200, xml_no_cache_headers, badge)
 
+  ## Doc build status badge
+  ## Set HTTP headers to control caching.
   get "/ci/badges/@pkg_name/nimdevel/docstatus.svg":
-    ## Doc build status badge
-    ## Set HTTP headers to control caching.
     log_req request
     stats.incr("views")
     let pname = normalize(@"pkg_name")
@@ -1534,8 +1531,8 @@ router mainRouter:
         doc_running_badge
     resp(Http200, xml_no_cache_headers, badge)
 
+  ## Build output
   get "/ci/badges/@pkg_name/nimdevel/output.html":
-    ## Build output
     log_req request
     stats.incr("views")
     log_info "$#" % $request.ip
@@ -1558,8 +1555,8 @@ router mainRouter:
     except KeyError:
       halt Http400
 
+  ## Doc build output
   get "/ci/badges/@pkg_name/nimdevel/doc_build_output.html":
-    ## Doc build output
     log_req request
     stats.incr("views")
     log_info "$#" % $request.ip
@@ -1592,8 +1589,8 @@ router mainRouter:
     except KeyError:
       halt Http400
 
+  ## Package build status in a simple JSON
   get "/api/v1/status/@pkg_name":
-    ## Package build status in a simple JSON
     log_req request
     let pname = normalize(@"pkg_name")
     let status =
@@ -1615,15 +1612,15 @@ router mainRouter:
     let s = %* {"status": status, "build_time": build_time}
     resp $s
 
+  ## Force new build
   post "/ci/rebuild/@pkg_name":
-    ## Force new build
     log_req request
     let pname = normalize(@"pkg_name")
     asyncCheck fetch_and_build_pkg_if_needed(pname, force_rebuild = true)
     resp "ok"
 
+  ## Serve robots.txt to throttle bots
   get "/robots.txt":
-    ## Serve robots.txt to throttle bots
     const robots = """
 User-agent: DataForSeoBot
 Disallow: /
@@ -1642,8 +1639,8 @@ Crawl-delay: 300
     resp(robots, contentType = "text/plain")
 
   include "templates/jsondoc_symbols.tmpl" # generate_jsondoc_symbols_page
+  ## Search for jsondoc symbol across all packages
   get "/searchitem":
-    ## Search for jsondoc symbol across all packages
     log_req request
     stats.incr("views")
     let query = @"query"
@@ -1658,8 +1655,8 @@ Crawl-delay: 300
   template resp*(content: JsonNode): typed =
     resp($content, contentType = "application/json")
 
+  ## Search for jsondoc symbol across all packages
   get "/api/v1/search_symbol":
-    ## Search for jsondoc symbol across all packages
     log_req request
     stats.incr("views")
     let matches =
@@ -1670,8 +1667,8 @@ Crawl-delay: 300
     resp %matches
 
   include "templates/jsondoc_pkg_symbols.tmpl" # generate_jsondoc_pkg_symbols_page
+  ## Search for jsondoc symbol in one package
   post "/searchitem_pkg":
-    ## Search for jsondoc symbol in one package
     log_req request
     stats.incr("views")
     let pname = normalize(@"pkg_name").strip()
@@ -1692,8 +1689,8 @@ Crawl-delay: 300
     resp Http500, "Something bad happened: " & exception.msg
 
 
+## Removes trailing whitespace and normalizes line endings to LF.
 proc cleanupWhitespace(s: string): string =
-  ## Removes trailing whitespace and normalizes line endings to LF.
   result = newStringOfCap(s.len)
   var i = 0
   while i < s.len:
@@ -1724,104 +1721,100 @@ proc cleanupWhitespace(s: string): string =
   if result[^1] != '\L':
     result.add '\L'
 
+#[
+def refresh_nim_version(basepath):
+    """Refresh Nim version from the last successful build
+    """
+    global last_successful_nim_version
+    try:
+       r = requests.get(basepath + 'release_tarball_name')
+       v = r.text.strip().split('/')[-1]
+       assert v.startswith('nim-')
+       last_successful_nim_version = v[4:-7]
+    except Exception as e:
+       print(e)
+       pass
+
+def start_build_if_needed():
+    rebuild_nim, run_install_test, reason = \
+       repo_monitor.check(rebuild_nim=False, run_install_test=False)
+    if reason:
+       start_build(rebuild_nim=rebuild_nim, reason=reason,
+                   run_install_test=run_install_test)
+       return True
+    return False
+
+def timed_start_build_if_needed():
+    Timer(REBUILD_CHECK_TIME, timed_start_build_if_needed).start()
+    start_build_if_needed()
+
+def send_status_email_if_needed():
+    pass
+
+def timed_send_status_email_if_needed():
+    Timer(REBUILD_CHECK_TIME, timed_start_build_if_needed).start()
+    send_status_email_if_needed()
+]#
 
 
-#def refresh_nim_version(basepath):
-#    """Refresh Nim version from the last successful build
-#    """
-#    global last_successful_nim_version
-#    try:
-#        r = requests.get(basepath + 'release_tarball_name')
-#        v = r.text.strip().split('/')[-1]
-#        assert v.startswith('nim-')
-#        last_successful_nim_version = v[4:-7]
-#    except Exception as e:
-#        print(e)
-#        pass
-#
-#
-#
-#def start_build_if_needed():
-#    rebuild_nim, run_install_test, reason = \
-#        repo_monitor.check(rebuild_nim=False, run_install_test=False)
-#    if reason:
-#        start_build(rebuild_nim=rebuild_nim, reason=reason,
-#                    run_install_test=run_install_test)
-#        return True
-#    return False
-#
-#
-#def timed_start_build_if_needed():
-#    Timer(REBUILD_CHECK_TIME, timed_start_build_if_needed).start()
-#    start_build_if_needed()
-#
-#def send_status_email_if_needed():
-#    pass
-#
-#def timed_send_status_email_if_needed():
-#    Timer(REBUILD_CHECK_TIME, timed_start_build_if_needed).start()
-#    send_status_email_if_needed()
+#[
+status_fn = os.path.expanduser("~/.nimci_cronjob.json")
+def load_status():
+    try:
+       with open(status_fn) as f:
+           return json.load(f)
+    except IOError:
+       return dict(nim_commit=None, nimble_commit=None, pkgs_commit=None)
+
+def save_status(st):
+    with open(status_fn, 'w') as f:
+       json.dump(st, f)
+]#
 
 
+#[
+def check(rebuild_nim=False, run_install_test=False):
+    changed_components = []
+    if not rebuild_nim:
+       status = load_status()
+       # rebuild Nim only if needed
+       last_nim_commit = fetch_last_commit(nim_commit_url)
+       last_nimble_commit = fetch_last_commit(nimble_commit_url)
+       if status['nim_commit'] != last_nim_commit:
+           changed_components.append('Nim')
 
+       if status['nimble_commit'] != last_nimble_commit:
+           changed_components.append('Nimble')
 
-#status_fn = os.path.expanduser("~/.nimci_cronjob.json")
-#def load_status():
-#    try:
-#        with open(status_fn) as f:
-#            return json.load(f)
-#    except IOError:
-#        return dict(nim_commit=None, nimble_commit=None, pkgs_commit=None)
-#
-#def save_status(st):
-#    with open(status_fn, 'w') as f:
-#        json.dump(st, f)
+       if changed_components:
+           rebuild_nim = True
+           status['nim_commit'] = last_nim_commit
+           status['nimble_commit'] = last_nimble_commit
+           save_status(status)
 
+    packages_changed = False
+    last_pkgs_commit = fetch_last_commit(pkgs_commit_url)
+    if status['pkgs_commit'] != last_pkgs_commit:
+       packages_changed = True
+       changed_components.append('Packages list')
+       status['pkgs_commit'] = last_pkgs_commit
+       save_status(status)
 
+    run_install_test = run_install_test or rebuild_nim or packages_changed
 
-#
-#def check(rebuild_nim=False, run_install_test=False):
-#    changed_components = []
-#    if not rebuild_nim:
-#        status = load_status()
-#        # rebuild Nim only if needed
-#        last_nim_commit = fetch_last_commit(nim_commit_url)
-#        last_nimble_commit = fetch_last_commit(nimble_commit_url)
-#        if status['nim_commit'] != last_nim_commit:
-#            changed_components.append('Nim')
-#
-#        if status['nimble_commit'] != last_nimble_commit:
-#            changed_components.append('Nimble')
-#
-#        if changed_components:
-#            rebuild_nim = True
-#            status['nim_commit'] = last_nim_commit
-#            status['nimble_commit'] = last_nimble_commit
-#            save_status(status)
-#
-#    packages_changed = False
-#    last_pkgs_commit = fetch_last_commit(pkgs_commit_url)
-#    if status['pkgs_commit'] != last_pkgs_commit:
-#        packages_changed = True
-#        changed_components.append('Packages list')
-#        status['pkgs_commit'] = last_pkgs_commit
-#        save_status(status)
-#
-#    run_install_test = run_install_test or rebuild_nim or packages_changed
-#
-#    reason = "change in %s" % ', '.join(changed_components) \
-#        if changed_components else None
-#    return rebuild_nim, run_install_test, reason
-#
+    reason = "change in %s" % ', '.join(changed_components) \
+       if changed_components else None
+    return rebuild_nim, run_install_test, reason
+]#
 
 
 proc start_nim_commit_polling(poll_time: TimeInterval) {.async.} =
   while true:
     await sleepAsync(poll_time.milliseconds)
-    #FIXME asyncCheck
+    # FIXME asyncCheck
 
+## Ping systemd watchdog using sd_notify
 proc run_systemd_sdnotify_pinger(ping_time_s: int) {.async.} =
-  ## Ping systemd watchdog using sd_notify
   const msg = "NOTIFY_SOCKET env var not found - pinging to logfile"
   if not existsEnv("NOTIFY_SOCKET"):
     log_info msg
@@ -1843,9 +1836,9 @@ proc run_systemd_sdnotify_pinger(ping_time_s: int) {.async.} =
     await sleepAsync ping_time_s * 1000
 
 
+## Poll GH for packages.json
+## Overwrite packages.json local file!
 proc run_github_packages_json_polling(poll_time_s: int) {.async.} =
-  ## Poll GH for packages.json
-  ## Overwrite packages.json local file!
   log_debug "starting GH packages.json polling"
   var first_run = true
   while true:
@@ -1887,24 +1880,21 @@ proc run_github_packages_json_polling(poll_time_s: int) {.async.} =
       log.error getCurrentExceptionMsg()
 
 
-
-
-
+## Exit signal handler
 onSignal(SIGINT, SIGTERM):
-  ## Exit signal handler
   log.info "Exiting"
   cache.save()
-  #save_packages()
+  # save_packages()
   quit()
 
 proc main() =
-  #setup_seccomp()
+  # setup_seccomp()
   log_info "starting"
   conf.tmp_nimble_root_dir.createDir()
   load_packages()
   cache = load_cache()
   scan_pkgs_dir(conf.tmp_nimble_root_dir)
-  #asyncCheck start_nim_commit_polling(github_nim_commit_polling_time)
+  # asyncCheck start_nim_commit_polling(github_nim_commit_polling_time)
   asyncCheck run_systemd_sdnotify_pinger(sdnotify_ping_time_s)
   asyncCheck run_github_packages_json_polling(github_packages_json_polling_time_s)
 
