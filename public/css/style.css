@@ -188,6 +188,11 @@ article p {
   line-height: 1.6em !important;
 }
 
+pre {
+  padding: 15px;
+  border-radius: 10px;
+}
+
 .dark-theme .text-theme-color {
   color: white;
 }
@@ -199,8 +204,6 @@ article p {
 
 .dark-theme pre {
   background: #1d2026;
-  padding: 15px;
-  border-radius: 10px;
 }
 
 .dark-theme .box:hover {
@@ -274,12 +277,16 @@ body.dark-theme .box article {
   color: #8A94A7;
 }
 
-body.dark-theme a {
+a {
   text-decoration: none;
 }
 
 body.dark-theme .text-muted {
   color: #8c8c8c !important;
+}
+
+body.dark-theme .table {
+  color:  #f7f5ee;
 }
 
 footer {
@@ -310,4 +317,13 @@ footer a {
 .py-10 {
   padding-top: 6rem !important;
   padding-bottom: 6rem !important;
+}
+
+.pt-32 {
+  padding-top: 8rem !important;
+}
+
+.py-32 {
+  padding-top: 8rem !important;
+  padding-bottom: 8rem !important;
 }

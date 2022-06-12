@@ -1312,8 +1312,8 @@ router mainRouter:
     let s = %* {"version": 1, "idx_filenames": idx_filenames}
     resp $s
 
-  #get "/docs/@pkg_name_and_doc_path":
   ## Serve hosted docs and idx files for a package
+  # get "/docs/@pkg_name_and_doc_path":
   get "/docs/@pkg_name/@a?/?@b?/?@c?/?@d?":
     log_req request
     stats.incr("views")
@@ -1417,9 +1417,10 @@ router mainRouter:
     log_req request
     stats.incr("views")
     resp base_page(request, """
-    <br/>
-    <p>Runtime: $#</p>
-    <p>Queried packages count: $#</p>
+<div class="container" style="padding-top: 10rem;">
+  <p class="text-center">Runtime: $#</p>
+  <p class="text-center">Queried packages count: $#</p>
+</div>
     """ % [$cpuTime(), $len(most_queried_packages)])
 
   # CI Routing
@@ -1635,7 +1636,7 @@ Disallow: /pkg
 Disallow: /search
 Disallow: /searchitem
 Crawl-delay: 300
-    """
+"""
     resp(robots, contentType = "text/plain")
 
   include "templates/jsondoc_symbols.tmpl" # generate_jsondoc_symbols_page
