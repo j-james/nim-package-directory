@@ -31,7 +31,7 @@
         <a href="/search?query=robotics">robotics</a>
       </div>
     </div>
-    <div class="col-lg-4 align-self-center">
+    <div class="col-lg-4 align-self-center" id="art">
       <img src="/img/01.png" width="415px" alt="">
     </div>
   </div>
@@ -62,7 +62,7 @@ ${generate_search_box()}
     </div>
   </div>
   <div class="row g-4 mb-4">
-    # for i in 0 .. min(8, len(github_trending))-1:
+    # for i in 0 .. min(9, len(github_trending))-1:
     # let pkg = github_trending[i]
     <div class="col-lg-4 col-md-6">
       <div class="box box-pkg rounded p-3" stars="${pkg["stargazers_count"].getInt}">
