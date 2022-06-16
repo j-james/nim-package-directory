@@ -10,25 +10,25 @@
       <div class="row">
         <div class="col-12 spotlight position-relative">
           <form method="GET" action="/search" id="searchbox">
-            <input type="text" class="border-radius-full w-100" placeholder="Search for packages...">
+            <input id="search" name="query" type="text" class="border-radius-full w-100" placeholder="Search for packages..." value="$value">
           </form>
         </div>
       </div>
       <div class="mt-4 tags-area">
-        <a href="/search?query=embedded-systems">embedded-systems</a>
-        <a href="/search?query=web-framework">web-framework</a>
-        <a href="/search?query=IoT">IoT</a>
-        <a href="/search?query=game-engine">game-engine</a>
-        <a href="/search?query=command-line">command-line</a>
+        <a href="/search?query=embedded systems">embedded systems</a>
+        <a href="/search?query=web framework">web frameworks</a>
+        <a href="/search?query=iot">IoT</a>
+        <a href="/search?query=game engine">game engines</a>
+        <a href="/search?query=command line">command line</a>
         <a href="/search?query=parser">parser</a>
-        <a href="/search?query=AI">AI</a>
+        <a href="/search?query=ai">AI</a>
         <a href="/search?query=network">network</a>
         <a href="/search?query=yaml">yaml</a>
-        <a href="/search?query=front-end">front-end</a>
-        <a href="/search?query=template-engine">template-engine</a>
+        <a href="/search?query=frontend">frontend</a>
+        <a href="/search?query=template engine">template engines</a>
         <a href="/search?query=javascript">javascript</a>
         <a href="/search?query=wrapper">wrapper</a>
-        <a href="/search?query=robotics">robotics</a>
+        <a href="/search?query=graphics">graphics</a>
       </div>
     </div>
     <div class="col-lg-4 align-self-center" id="art">
@@ -62,7 +62,7 @@ ${generate_search_box()}
     </div>
   </div>
   <div class="row g-4 mb-4">
-    # for i in 0 .. min(9, len(github_trending))-1:
+    # for i in 0 .. min(9, github_trending.len)-1:
     # let pkg = github_trending[i]
     <div class="col-lg-4 col-md-6">
       <div class="box box-pkg rounded p-3" stars="${pkg["stargazers_count"].getInt}">
@@ -75,7 +75,7 @@ ${generate_search_box()}
           </li>
           <li class="text-gray">
             <svg width="16" height="16" viewBox="0 0 16 16" style="display:inline-block;vertical-align:text-bottom"><path fill-rule="evenodd" d="M2.5 7.775V2.75a.25.25 0 01.25-.25h5.025a.25.25 0 01.177.073l6.25 6.25a.25.25 0 010 .354l-5.025 5.025a.25.25 0 01-.354 0l-6.25-6.25a.25.25 0 01-.073-.177zm-1.5 0V2.75C1 1.784 1.784 1 2.75 1h5.025c.464 0 .91.184 1.238.513l6.25 6.25a1.75 1.75 0 010 2.474l-5.026 5.026a1.75 1.75 0 01-2.474 0l-6.25-6.25A1.75 1.75 0 011 7.775zM6 5a1 1 0 100 2 1 1 0 000-2z"></path></svg>
-            5.1.2
+            Unknown
           </li>
           <li class="text-gray">
             <svg width="16" height="16" viewBox="0 0 16 16" style="display:inline-block;vertical-align:text-bottom"><path fill-rule="evenodd" d="M8.75.75a.75.75 0 00-1.5 0V2h-.984c-.305 0-.604.08-.869.23l-1.288.737A.25.25 0 013.984 3H1.75a.75.75 0 000 1.5h.428L.066 9.192a.75.75 0 00.154.838l.53-.53-.53.53v.001l.002.002.002.002.006.006.016.015.045.04a3.514 3.514 0 00.686.45A4.492 4.492 0 003 11c.88 0 1.556-.22 2.023-.454a3.515 3.515 0 00.686-.45l.045-.04.016-.015.006-.006.002-.002.001-.002L5.25 9.5l.53.53a.75.75 0 00.154-.838L3.822 4.5h.162c.305 0 .604-.08.869-.23l1.289-.737a.25.25 0 01.124-.033h.984V13h-2.5a.75.75 0 000 1.5h6.5a.75.75 0 000-1.5h-2.5V3.5h.984a.25.25 0 01.124.033l1.29.736c.264.152.563.231.868.231h.162l-2.112 4.692a.75.75 0 00.154.838l.53-.53-.53.53v.001l.002.002.002.002.006.006.016.015.045.04a3.517 3.517 0 00.686.45A4.492 4.492 0 0013 11c.88 0 1.556-.22 2.023-.454a3.512 3.512 0 00.686-.45l.045-.04.01-.01.006-.005.006-.006.002-.002.001-.002-.529-.531.53.53a.75.75 0 00.154-.838L13.823 4.5h.427a.75.75 0 000-1.5h-2.234a.25.25 0 01-.124-.033l-1.29-.736A1.75 1.75 0 009.735 2H8.75V.75zM1.695 9.227c.285.135.718.273 1.305.273s1.02-.138 1.305-.273L3 6.327l-1.305 2.9zm10 0c.285.135.718.273 1.305.273s1.02-.138 1.305-.273L13 6.327l-1.305 2.9z"></path></svg>
@@ -88,14 +88,15 @@ ${generate_search_box()}
   </div>
 </div>
 
-<div class="container py-8">
+<div class="container py-8 mt-4">
   <div class="row">
     <div class="col-12">
       <h2 class="fw-bold mb-2">New Packages</h2>
     </div>
   </div>
   <div class="row g-4">
-    # for pkg in new_packages:
+    # for i in 0 .. min(9, new_packages.len)-1:
+    # let pkg = new_packages[i]
     <div class="col-lg-4 col-md-6">
       <div class="box box-pkg rounded p-3" stars="">
         <h3 class="lh-1 display-1 mb-2"><a href="/pkg/${pkg["name"].str}">${pkg["name"].str}</a></h3>
@@ -109,7 +110,7 @@ ${generate_search_box()}
             <svg width="16" height="16" viewBox="0 0 16 16" style="display:inline-block;vertical-align:text-bottom">
               <path fill-rule="evenodd" d="M2.5 7.775V2.75a.25.25 0 01.25-.25h5.025a.25.25 0 01.177.073l6.25 6.25a.25.25 0 010 .354l-5.025 5.025a.25.25 0 01-.354 0l-6.25-6.25a.25.25 0 01-.073-.177zm-1.5 0V2.75C1 1.784 1.784 1 2.75 1h5.025c.464 0 .91.184 1.238.513l6.25 6.25a1.75 1.75 0 010 2.474l-5.026 5.026a1.75 1.75 0 01-2.474 0l-6.25-6.25A1.75 1.75 0 011 7.775zM6 5a1 1 0 100 2 1 1 0 000-2z"></path>
             </svg>
-            5.1.2
+            Unknown
           </li>
           <li class="text-gray">
             <svg width="16" height="16" viewBox="0 0 16 16" style="display:inline-block;vertical-align:text-bottom"><path fill-rule="evenodd" d="M8.75.75a.75.75 0 00-1.5 0V2h-.984c-.305 0-.604.08-.869.23l-1.288.737A.25.25 0 013.984 3H1.75a.75.75 0 000 1.5h.428L.066 9.192a.75.75 0 00.154.838l.53-.53-.53.53v.001l.002.002.002.002.006.006.016.015.045.04a3.514 3.514 0 00.686.45A4.492 4.492 0 003 11c.88 0 1.556-.22 2.023-.454a3.515 3.515 0 00.686-.45l.045-.04.016-.015.006-.006.002-.002.001-.002L5.25 9.5l.53.53a.75.75 0 00.154-.838L3.822 4.5h.162c.305 0 .604-.08.869-.23l1.289-.737a.25.25 0 01.124-.033h.984V13h-2.5a.75.75 0 000 1.5h6.5a.75.75 0 000-1.5h-2.5V3.5h.984a.25.25 0 01.124.033l1.29.736c.264.152.563.231.868.231h.162l-2.112 4.692a.75.75 0 00.154.838l.53-.53-.53.53v.001l.002.002.002.002.006.006.016.015.045.04a3.517 3.517 0 00.686.45A4.492 4.492 0 0013 11c.88 0 1.556-.22 2.023-.454a3.512 3.512 0 00.686-.45l.045-.04.01-.01.006-.005.006-.006.002-.002.001-.002-.529-.531.53.53a.75.75 0 00.154-.838L13.823 4.5h.427a.75.75 0 000-1.5h-2.234a.25.25 0 01-.124-.033l-1.29-.736A1.75 1.75 0 009.735 2H8.75V.75zM1.695 9.227c.285.135.718.273 1.305.273s1.02-.138 1.305-.273L3 6.327l-1.305 2.9zm10 0c.285.135.718.273 1.305.273s1.02-.138 1.305-.273L13 6.327l-1.305 2.9z"></path>
@@ -123,16 +124,17 @@ ${generate_search_box()}
   </div>
 </div>
 
-<div class="container py-8">
+<div class="container py-8 mt-4">
   <div class="row">
     <div class="col-12">
       <h2 class="fw-bold mb-2">Most Queried</h2>
     </div>
   </div>
   <div class="row g-4">
-    # for pkg in most_queried_packages:
+    # for i in 0 .. min(9, most_queried_packages.len)-1:
+    # let pkg = most_queried_packages[i]
     <div class="col-lg-4 col-md-6">
-      <div class="box box-pkg rounded p-3" stars="+12K">
+      <div class="box box-pkg rounded p-3" stars="">
         <h3 class="lh-1 display-1 mb-2"><a href="/pkg/${pkg["name"].str}">${pkg["name"].str}</a></h3>
         <p class="mb-0 pb-0" style="margin-bottom:0">${pkg["description"].str}</p>
         <ul class="package-box-meta-foot mt-1">
@@ -143,7 +145,8 @@ ${generate_search_box()}
           <li class="text-gray">
             <svg width="16" height="16" viewBox="0 0 16 16" style="display:inline-block;vertical-align:text-bottom">
               <path fill-rule="evenodd" d="M2.5 7.775V2.75a.25.25 0 01.25-.25h5.025a.25.25 0 01.177.073l6.25 6.25a.25.25 0 010 .354l-5.025 5.025a.25.25 0 01-.354 0l-6.25-6.25a.25.25 0 01-.073-.177zm-1.5 0V2.75C1 1.784 1.784 1 2.75 1h5.025c.464 0 .91.184 1.238.513l6.25 6.25a1.75 1.75 0 010 2.474l-5.026 5.026a1.75 1.75 0 01-2.474 0l-6.25-6.25A1.75 1.75 0 011 7.775zM6 5a1 1 0 100 2 1 1 0 000-2z"></path>
-            </svg> 5.1.2
+            </svg>
+            Unknown
           </li>
           <li class="text-gray">
             <svg width="16" height="16" viewBox="0 0 16 16" style="display:inline-block;vertical-align:text-bottom"><path fill-rule="evenodd" d="M8.75.75a.75.75 0 00-1.5 0V2h-.984c-.305 0-.604.08-.869.23l-1.288.737A.25.25 0 013.984 3H1.75a.75.75 0 000 1.5h.428L.066 9.192a.75.75 0 00.154.838l.53-.53-.53.53v.001l.002.002.002.002.006.006.016.015.045.04a3.514 3.514 0 00.686.45A4.492 4.492 0 003 11c.88 0 1.556-.22 2.023-.454a3.515 3.515 0 00.686-.45l.045-.04.016-.015.006-.006.002-.002.001-.002L5.25 9.5l.53.53a.75.75 0 00.154-.838L3.822 4.5h.162c.305 0 .604-.08.869-.23l1.289-.737a.25.25 0 01.124-.033h.984V13h-2.5a.75.75 0 000 1.5h6.5a.75.75 0 000-1.5h-2.5V3.5h.984a.25.25 0 01.124.033l1.29.736c.264.152.563.231.868.231h.162l-2.112 4.692a.75.75 0 00.154.838l.53-.53-.53.53v.001l.002.002.002.002.006.006.016.015.045.04a3.517 3.517 0 00.686.45A4.492 4.492 0 0013 11c.88 0 1.556-.22 2.023-.454a3.512 3.512 0 00.686-.45l.045-.04.01-.01.006-.005.006-.006.002-.002.001-.002-.529-.531.53.53a.75.75 0 00.154-.838L13.823 4.5h.427a.75.75 0 000-1.5h-2.234a.25.25 0 01-.124-.033l-1.29-.736A1.75 1.75 0 009.735 2H8.75V.75zM1.695 9.227c.285.135.718.273 1.305.273s1.02-.138 1.305-.273L3 6.327l-1.305 2.9zm10 0c.285.135.718.273 1.305.273s1.02-.138 1.305-.273L13 6.327l-1.305 2.9z"></path>

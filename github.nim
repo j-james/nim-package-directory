@@ -155,9 +155,9 @@ proc fetch_trending_packages*(request: Request, pkgs: Pkgs): Future[seq[Pkg]] {.
     # (there may be false positives, but considerably fewer than otherwise)
     let package_name: string =
       if p["name"].str.len > 4 and p["name"].str[0..3] == "nim-":
-        p["name"].str[4..^1]
+        p["name"].str[4..^1].normalize()
       else:
-        p["name"].str
+        p["name"].str.normalize()
 
     # FIXME: checking names is not completely reliable, check urls instead
     if pkgs.hasKey(package_name):

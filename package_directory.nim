@@ -833,11 +833,15 @@ router mainRouter:
     log_debug "pkgs history len: $#" % $cache.pkgs_history.len
     var new_pkgs: seq[Pkg] = @[]
     for n in 1..min(cache.pkgs_history.len, 10):
-      let pname = cache.pkgs_history[^n].name.normalize()
-      if pkgs.hasKey(pname):
-        new_pkgs.add pkgs[pname]
+      let package_name: string =
+        if cache.pkgs_history[^n].name.len > 4 and cache.pkgs_history[^n].name[0..3] == "nim-":
+          cache.pkgs_history[^n].name[4..^1].normalize()
+        else:
+          cache.pkgs_history[^n].name.normalize()
+      if pkgs.hasKey(package_name):
+        new_pkgs.add pkgs[package_name]
       else:
-        log_debug "$# not found in package list" % pname
+        log_debug "$# not found in package list" % package_name
 
     # Grab trending packages, as measured by GitHub
     let trending_pkgs = await fetch_trending_packages(request, pkgs)
@@ -848,14 +852,12 @@ router mainRouter:
     log_req request
     stats.incr("views")
 
-    let found_pkg_names = search_packages(@"query")
+    var searched_pkgs: seq[Pkg] = @[]
+    for name in search_packages(@"query").keys():
+      searched_pkgs.add pkgs[name]
+    stats.gauge("search_found_pkgs", searched_pkgs.len)
 
-    var pkgs_list: seq[Pkg] = @[]
-    for pn in found_pkg_names.keys():
-      pkgs_list.add pkgs[pn]
-
-    stats.gauge("search_found_pkgs", pkgs_list.len)
-    let body = generate_search_box(@"query") & generate_pkg_list_page(pkgs_list)
+    let body = generate_search_box(@"query") & generate_pkg_list_page(searched_pkgs)
     resp base_page(request, body)
 
   ## build history and status

@@ -95,7 +95,7 @@ body {
   position: relative;
 }
 
-.box:after {
+.box-pkg:after {
   content: attr(stars) " ★";
   position: absolute;
   top: 15px;
@@ -175,6 +175,10 @@ body {
   z-index: 1;
 }
 
+a {
+  text-decoration: none;
+}
+
 article ul {
   padding: 0;
   list-style: none;
@@ -222,6 +226,7 @@ pre {
 .package-box-meta-foot li svg {
   fill: #8A94A7;
 }
+
 
 /**
  * Dark Theme
@@ -275,10 +280,6 @@ body.dark-theme .box {
 
 body.dark-theme .box article {
   color: #8A94A7;
-}
-
-a {
-  text-decoration: none;
 }
 
 body.dark-theme .text-muted {
