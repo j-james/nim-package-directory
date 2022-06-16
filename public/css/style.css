@@ -289,6 +289,22 @@ body.dark-theme .table {
   color:  #f7f5ee;
 }
 
+body #light-mode-icon {
+  display: block;
+}
+
+body.dark-theme #light-mode-icon {
+  display: none;
+}
+
+body #dark-mode-icon {
+  display: none;
+}
+
+body.dark-theme #dark-mode-icon {
+  display: block;
+}
+
 footer {
   font-size: 1.1rem;
 }
