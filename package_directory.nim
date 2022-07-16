@@ -149,8 +149,8 @@ proc save(cache: Cache) =
   f.store(cache)
   f.close()
 
-## Load cache from disk or create empty cache
 proc load_cache(): Cache =
+  ## Load cache from disk or create empty cache
   log_debug "loading cache at $#" % cache_fn
   try:
     # FIXME
@@ -165,8 +165,8 @@ proc load_cache(): Cache =
     result.save()
     log_debug "new cache created"
 
-## Save package metadata
 proc save_metadata(j: PkgDocMetadata, fn: string) =
+  ## Save package metadata
   log_debug "Saving to $#" % fn
   var k = PkgDocMetadata()
   deepCopy[PkgDocMetadata](k, j)
@@ -178,14 +178,14 @@ proc save_metadata(j: PkgDocMetadata, fn: string) =
   f.store(k)
   f.close()
 
-## Load package metadata
 proc load_metadata(fn: string): PkgDocMetadata =
+  ## Load package metadata
   log_debug "Loading $#" % fn
   load(newFileStream(fn, fmRead), result)
 
-## scan all packages dirs, populate jsondoc_symbols,
-## jsondoc_symbols_by_pkg and pkgs_doc_files
 proc scan_pkgs_dir(pkgs_root: string) =
+  ## scan all packages dirs, populate jsondoc_symbols,
+  ## jsondoc_symbols_by_pkg and pkgs_doc_files
   let pattern = pkgs_root / "*" / "nimpkgdir.json"
   # e.g /var/lib/nim_package_directory/cache/*/nimpkgdir.json
   log_info "scanning pattern '" & pattern & "'"
@@ -232,8 +232,8 @@ proc setup_seccomp() =
 ]#
 
 
-## Search packages by name, tag and keyword
 proc search_packages*(query: string): CountTable[string] =
+  ## Search packages by name, tag and keyword
   let query = query.strip.toLowerAscii.split({' ', ','})
   var found_pkg_names = initCountTable[string]()
   for item in query:
@@ -259,8 +259,8 @@ proc search_packages*(query: string): CountTable[string] =
   found_pkg_names.sort()
   return found_pkg_names
 
-## Add BuildHistoryItem to build history
 proc append(build_history: var Deque[BuildHistoryItem], name: string,
+  ## Add BuildHistoryItem to build history
     build_time: Time, build_status, doc_build_status: BuildStatus) =
   if build_history.len == build_history_size:
     discard build_history.popLast
@@ -297,10 +297,10 @@ proc run_process(bin_path, desc, work_dir: string,
   return ((exit_val == 0), stdout_str)
 ]#
 
-## Run command asyncronously with timeout
 proc run_process2(bin_path, desc, work_dir: string,
     timeout: int, log_output: bool,
     args: seq[string]): Future[RunOutput] {.async.} =
+  ## Run command asyncronously with timeout
   let
     t0 = epochTime()
     p = startProcess(
@@ -416,9 +416,9 @@ proc fetch_and_build_pkg_using_nimble(pname: string) {.async.} =
   pkgs_doc_files[pname].build_time = getTime()
   pkgs_doc_files[pname].expire_time = getTime() + build_expiry_time
 
-## Load packages.json
-## Rebuild packages_by_tag, packages_by_description_word
 proc load_packages*() =
+  ## Load packages.json
+  ## Rebuild packages_by_tag, packages_by_description_word
   log_debug "loading $#" % conf.packages_list_fname
   pkgs.clear()
   if not conf.packages_list_fname.file_exists:
@@ -461,14 +461,14 @@ proc load_packages*() =
   # log_debug "writing $#" % conf.packages_list_fname
   # conf.packages_list_fname.writeFile(conf.packages_list_fname.readFile)
 
-## Generate pkg parent dir
 proc package_parent_dir(pname: string): string =
+  ## Generate pkg parent dir
   # Full path example:
   # /var/lib/nim_package_dir/nimgame2
   conf.tmp_nimble_root_dir / pname
 
-## Locate installed pkg root dir
 proc locate_pkg_root_dir(pname: string): string =
+  ## Locate installed pkg root dir
   # Full path example:
   # /dev/shm/nim_package_dir/nimgame2/pkgs/nimgame2-0.1.0
   let pkgs_dir = conf.tmp_nimble_root_dir / pname / "pkgs"
@@ -485,8 +485,8 @@ proc locate_pkg_root_dir(pname: string): string =
 
   raise newException(Exception, "Root dir for $# not found" % pname)
 
-## Build docs
 proc build_docs(pname: string) {.async.} =
+  ## Build docs
   let pkg_root_dir = locate_pkg_root_dir(pname)
   log_debug "Walking ", pkg_root_dir
   #for fname in pkg_root_dir.walkDirRec(filter={pcFile}): # Bug in walkDirRec
@@ -544,9 +544,9 @@ proc build_docs(pname: string) {.async.} =
     else: BuildStatus.Failed
 
 
-## Parse jsondoc items, add them to the global `jsondoc_symbols`
-## and `jsondoc_symbols_by_pkg`
 proc parse_jsondoc(fname: string, pkg_root_dir: string, pname: string) =
+  ## Parse jsondoc items, add them to the global `jsondoc_symbols`
+  ## and `jsondoc_symbols_by_pkg`
   # replace ".nim" with ".json"
   let (jsonf_dir, jsonf_basename, _) = splitFile(fname)
   var json_fn = jsonf_dir / jsonf_basename  & ".json"
@@ -596,9 +596,9 @@ proc parse_jsondoc(fname: string, pkg_root_dir: string, pname: string) =
     log_debug "failed to parse " & json_fn & " : " &
         getCurrentExceptionMsg()
 
-## Generate jsondoc items, add them to the global `jsondoc_symbols`
-## and `jsondoc_symbols_by_pkg`
 proc generate_jsondoc(pname: string) {.async.} =
+  ## Generate jsondoc items, add them to the global `jsondoc_symbols`
+  ## and `jsondoc_symbols_by_pkg`
   let pkg_root_dir = locate_pkg_root_dir(pname)
   log_debug "Walking ", pkg_root_dir
 
@@ -642,9 +642,9 @@ proc generate_doc_build_stats() =
   let rate = doc_gen_success_count * 100 / install_success_count
   stats.gauge("doc_gen_success_rate", rate)
 
-## Fetch package and build docs
-## Modifies pkgs_doc_files
 proc fetch_and_build_pkg_if_needed(pname: string, force_rebuild = false) {.async.} =
+  ## Fetch package and build docs
+  ## Modifies pkgs_doc_files
   try:
     # A build has been already done or is currently running.
     if pkgs_doc_files.hasKey(pname):
@@ -768,8 +768,8 @@ proc wait_build_completion(pname: string) {.async.} =
     log_debug "waiting already running build for $# $#s..." % [pname, $int(elapsed)]
     await sleepAsync 1000
 
-## Translate terminal colors into HTML with CSS classes
 proc translate_term_colors*(outp: string): string =
+  ## Translate terminal colors into HTML with CSS classes
   const sequences = @[
     ("[36m[2m", "<span>"),
     ("[32m[1m", """<span class="term-success">"""),
@@ -1347,7 +1347,7 @@ Disallow: /pkg
 Disallow: /search
 Disallow: /searchitem
 Crawl-delay: 300
-"""
+    """
     resp(robots, contentType = "text/plain")
 
   include "templates/jsondoc_symbols.tmpl" # generate_jsondoc_symbols_page
@@ -1402,8 +1402,8 @@ Crawl-delay: 300
   error Exception:
     resp Http500, "Something bad happened: " & exception.msg
 
-## Ping systemd watchdog using sd_notify
 proc run_systemd_sdnotify_pinger(ping_time_s: int) {.async.} =
+  ## Ping systemd watchdog using sd_notify
   const msg = "NOTIFY_SOCKET env var not found - pinging to logfile"
   if not existsEnv("NOTIFY_SOCKET"):
     log_info msg
@@ -1425,9 +1425,9 @@ proc run_systemd_sdnotify_pinger(ping_time_s: int) {.async.} =
     await sleepAsync ping_time_s * 1000
 
 
-## Poll GitHub for packages.json
-## Overwrites the packages.json local file!
 proc poll_nimble_packages(poll_time_s: int) {.async.} =
+  ## Poll GitHub for packages.json
+  ## Overwrites the packages.json local file!
   log_debug "starting GH packages.json polling"
   var first_run = true
   while true:
@@ -1469,8 +1469,8 @@ proc poll_nimble_packages(poll_time_s: int) {.async.} =
       log.error getCurrentExceptionMsg()
 
 
-## Exit signal handler
 onSignal(SIGINT, SIGTERM):
+  ## Exit signal handler
   log.info "Exiting"
   cache.save()
   quit()

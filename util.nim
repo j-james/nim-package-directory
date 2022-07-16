@@ -12,8 +12,8 @@ proc log_debug*(args: varargs[string, `$`]) =
 proc log_info*(args: varargs[string, `$`]) =
   log.info(args.join(" "))
 
-## Log request data
 proc log_req*(request: Request) =
+  ## Log request data
   var path = ""
   for c in request.path:
     if len(path) > 300:
@@ -26,9 +26,9 @@ proc log_req*(request: Request) =
       path.add c
   log_info "serving $# $# $#" % [request.ip, $request.reqMeth, path]
 
-## Based on Nimble implementation, compares versions a.b.c by simply
-## comparing the integers :-/
 proc is_newer*(b, a: string): int =
+  ## Based on Nimble implementation, compares versions a.b.c by simply
+  ## comparing the integers :-/
   for (ai, bi) in zip(a.split('.'), b.split('.')):
     let aa = parseInt(ai)
     let bb = parseInt(bi)
@@ -39,8 +39,8 @@ proc is_newer*(b, a: string): int =
 
   return -1
 
-## Extracts the release metadata chunk from `releases` matching the latest release
 proc extract_latest_version*(releases: JsonNode): (string, JsonNode) =
+  ## Extracts the release metadata chunk from `releases` matching the latest release
   var latest_version = "-1.-1.-1"
   for r in releases:
     let version = r["tag_name"].str.strip().strip(trailing = false, chars = {'v'})
@@ -49,8 +49,8 @@ proc extract_latest_version*(releases: JsonNode): (string, JsonNode) =
       result = (version, r)
   log_debug "Picking latest version from GH tags: ", latest_version
 
-## Extracts latest releases as JSON array
 proc extract_latest_versions_str*(releases: JsonNode): JsonNode =
+  ## Extracts latest releases as JSON array
   result = newJArray()
   var latest_version = "-1.-1.-1"
   var vers: seq[string] = @[]
@@ -86,8 +86,8 @@ proc strip_html*(html: string): string =
     elif c == '>':
       inside_tag = false
 
-## Removes trailing whitespace and normalizes line endings to LF.
 proc cleanup_whitespace*(s: string): string =
+  ## Removes trailing whitespace and normalizes line endings to LF.
   result = newStringOfCap(s.len)
   var i = 0
   while i < s.len:
